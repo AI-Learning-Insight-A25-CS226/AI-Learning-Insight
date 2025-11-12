@@ -1,6 +1,6 @@
 AI Learning Insight
 
-**AI Learning Insight** adalah platform analisis pembelajaran berbasis AI yang membantu mendeteksi gaya belajar siswa berdasarkan data perilaku seperti *study hours*, *attendance*, *assignment completion*, *motivation*, dan *stress level*.  
+**AI Learning Insight** adalah platform analisis pembelajaran berbasis AI yang membantu mendeteksi gaya belajar siswa berdasarkan data perilaku siswa dalam belajar. 
 Proyek ini terdiri dari tiga bagian utama:
 - **Machine Learning Service (FastAPI + Python)**
 - **Backend API (Express + PostgreSQL)**
@@ -31,4 +31,5 @@ cd D:\Dokumen\COURSE DICODING\AI-Learning-Web\frontend
 npm install
 npm run dev
 ```
+
 
