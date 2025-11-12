@@ -5,7 +5,7 @@ Proyek ini terdiri dari tiga bagian utama:
 - **Machine Learning Service (FastAPI + Python)**
 - **Backend API (Express + PostgreSQL)**
 - **Frontend Dashboard (React + Vite)**
-- 
+
 Struktur Proyek
 AI-Learning-Insight/
 ├── ml-service/ # FastAPI model inference service
@@ -31,3 +31,4 @@ cd D:\Dokumen\COURSE DICODING\AI-Learning-Web\frontend
 npm install
 npm run dev
 ```
+
