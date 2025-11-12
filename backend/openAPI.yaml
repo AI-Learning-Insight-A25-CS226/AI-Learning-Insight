@@ -1,256 +1,214 @@
 openapi: 3.0.3
 info:
-  title: AI Learning Insight API
+  title: AI Learning Insight API (with ML)
   version: 1.0.0
+  description: |
+    RESTful API untuk aplikasi **AI Learning Insight**, terintegrasi dengan FastAPI ML Service.
+    Mendukung autentikasi JWT, manajemen metrics pengguna, dan integrasi prediksi insight gaya belajar.
+
 servers:
   - url: http://localhost:5000
+    description: Local development server
 
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
-    ApiStatus:
-      type: string
-      enum: [success, fail, error]
     User:
       type: object
       properties:
-        id: { type: string, format: uuid }
-        email: { type: string, format: email }
-        name: { type: string }
-    Student:
+        id: { type: integer, example: 1 }
+        email: { type: string, example: "user@mail.com" }
+        name: { type: string, example: "User Example" }
+
+    Metrics:
       type: object
       properties:
-        id: { type: string, format: uuid }
-        user_id: { type: string, format: uuid }
-        name: { type: string }
-        email: { type: string, format: email }
-        class: { type: string, nullable: true }
-        created_at: { type: string, format: date-time }
-    Metric:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        date: { type: string, format: date, example: "2025-11-10" }
-        study_hours: { type: number, minimum: 0, maximum: 5 }
-        attendance: { type: integer, minimum: 1, maximum: 5 }
-        assignment_completion: { type: integer, minimum: 1, maximum: 5 }
-        motivation: { type: integer, minimum: 1, maximum: 5 }
-        stress_level: { type: integer, minimum: 1, maximum: 5 }
-        discussions: { type: integer, minimum: 0, maximum: 5 }
-        resources: { type: integer, minimum: 0, maximum: 5 }
-        created_at: { type: string, format: date-time, nullable: true }
-        updated_at: { type: string, format: date-time, nullable: true }
-    InsightReason:
-      type: object
-      properties:
-        key: { type: string, example: "study_hours" }
-        op:  { type: string, example: ">=" }
-        value:
-          oneOf: [{ type: number }, { type: string }]
-        actual:
-          oneOf: [{ type: number }, { type: string }]
-          nullable: true
+        study_hours: { type: number, example: 3.5 }
+        attendance: { type: number, example: 92 }
+        assignment_completion: { type: number, example: 85 }
+        motivation: { type: number, example: 4 }
+        stress_level: { type: number, example: 2 }
+        discussions: { type: number, example: 6 }
+        resources: { type: number, example: 9 }
+
     Insight:
       type: object
       properties:
-        label: { type: string, enum: [Fast, Consistent, Reflective] }
-        confidence: { type: number, minimum: 0, maximum: 1 }
+        student_id: { type: string, example: "1" }
+        label: { type: string, example: "Consistent Learner" }
+        confidence: { type: string, example: "0.8000" }
+        cluster_id: { type: integer, example: 1 }
         reasons:
           type: array
-          items: { $ref: "#/components/schemas/InsightReason" }
-        updated_at: { type: string, format: date-time }
+          items:
+            type: object
+            properties:
+              key: { type: string, example: "study_hours" }
+              op: { type: string, example: ">=" }
+              value: { type: number, example: 3 }
 
 paths:
-  /:
-    get:
-      summary: Root ping
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string, example: "✅ Backend ready" }
-
   /auth/register:
     post:
-      summary: Register user + student
+      summary: Register user baru
+      tags: [Auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password, name]
               properties:
-                email: { type: string, format: email }
-                password: { type: string, minLength: 6 }
+                email: { type: string }
+                password: { type: string }
                 name: { type: string }
+              example:
+                email: user@mail.com
+                password: secret123
+                name: User Example
       responses:
         "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      token: { type: string }
-                      user: { $ref: "#/components/schemas/User" }
-                      studentId: { type: string, format: uuid }
-        "400": { description: Bad Request }
+          description: Registrasi berhasil
+        "400":
+          description: Bad request
 
   /auth/login:
     post:
-      summary: Login and get JWT
+      summary: Login untuk mendapatkan token JWT
+      tags: [Auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password]
               properties:
-                email: { type: string, format: email }
+                email: { type: string }
                 password: { type: string }
+              example:
+                email: user@mail.com
+                password: secret123
       responses:
         "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      token: { type: string }
-        "401": { description: Unauthorized }
+          description: Login berhasil, mengembalikan access token
+        "401":
+          description: Kredensial salah
 
   /auth/me:
     get:
-      security: [{ bearerAuth: [] }]
-      summary: Get current user (from JWT)
+      summary: Mendapatkan data user saat ini
+      security:
+        - BearerAuth: []
+      tags: [Auth]
       responses:
         "200":
-          description: OK
+          description: Data user saat ini
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      user: { $ref: "#/components/schemas/User" }
-        "401": { description: Unauthorized }
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Token tidak valid
 
-  /students/me:
+  /users/{userId}/metrics:
     get:
-      security: [{ bearerAuth: [] }]
-      summary: Get my student profile
+      summary: Melihat metrics user
+      security:
+        - BearerAuth: []
+      tags: [Metrics]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         "200":
-          description: OK
+          description: Metrics berhasil diambil
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data: { $ref: "#/components/schemas/Student" }
-        "401": { description: Unauthorized }
-        "404": { description: Not Found }
-
-  /metrics:
-    post:
-      security: [{ bearerAuth: [] }]
-      summary: Add one metric row
+                $ref: '#/components/schemas/Metrics'
+    put:
+      summary: Update atau buat metrics baru
+      security:
+        - BearerAuth: []
+      tags: [Metrics]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: "#/components/schemas/Metric"
-              required:
-                - date
-                - study_hours
-                - attendance
-                - assignment_completion
-                - motivation
-                - stress_level
+              $ref: '#/components/schemas/Metrics'
       responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      id: { type: string, format: uuid }
-        "400": { description: Bad Request }
-        "401": { description: Unauthorized }
+        "200":
+          description: Metrics berhasil diperbarui
 
-  /metrics/me:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: List my metrics
+  /users/{userId}/metrics/recompute:
+    post:
+      summary: Hitung ulang metrics berdasarkan data mentah
+      security:
+        - BearerAuth: []
+      tags: [Metrics]
       parameters:
-        - in: query
-          name: limit
-          schema: { type: integer, default: 30, minimum: 1, maximum: 200 }
-        - in: query
-          name: offset
-          schema: { type: integer, default: 0, minimum: 0 }
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      metrics:
-                        type: array
-                        items: { $ref: "#/components/schemas/Metric" }
-        "401": { description: Unauthorized }
+          description: Metrics berhasil dihitung ulang
 
-  /insights/me:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: Get latest insight for current student
+  /users/{userId}/insights:
+    post:
+      summary: Prediksi insight gaya belajar baru (terhubung dengan ML service)
+      security:
+        - BearerAuth: []
+      tags: [Insights]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                features:
+                  $ref: '#/components/schemas/Metrics'
       responses:
         "200":
-          description: OK
+          description: Prediksi insight berhasil
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: { $ref: "#/components/schemas/ApiStatus" }
-                  data:
-                    type: object
-                    properties:
-                      insight: { $ref: "#/components/schemas/Insight" }
-        "401": { description: Unauthorized }
-        "503": { description: ML service unavailable }
+                $ref: '#/components/schemas/Insight'
+    get:
+      summary: Mendapatkan insight terbaru user
+      security:
+        - BearerAuth: []
+      tags: [Insights]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Insight terakhir berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Insight'

@@ -1,24 +1,26 @@
 import * as metrics from '../services/metricsService.js'
-import * as students from '../services/studentService.js'
 
-export async function listMyMetrics(req, res, next) {
+export async function getMetrics(req, res, next) {
   try {
-    const student = await students.getByUserId(req.user.id)
-    if (!student) return res.status(404).json({ status: 'fail', message: 'siswa tidak ditemukan' })
-    const rows = await metrics.listByStudent(student.id, Number(req.query.limit) || 30)
-    return res.json({ status: 'success', data: { metrics: rows } })
-  } catch (err) { next(err) }
+    const userId = Number(req.params.userId)
+    const data = await metrics.getByUserId(userId)
+    if (!data) return res.status(404).json({ status: 'fail', message: 'metrics not found' })
+    res.json({ status: 'success', data: { metrics: data } })
+  } catch (e) { next(e) }
 }
 
-export async function addMetric(req, res, next) {
+export async function upsertMetrics(req, res, next) {
   try {
-    const student = await students.getByUserId(req.user.id)
-    if (!student) return res.status(404).json({ status: 'fail', message: 'siswa tidak ditemukan' })
+    const userId = Number(req.params.userId)
+    const data = await metrics.upsertDirect({ userId, features: req.body })
+    res.json({ status: 'success', data: { metrics: data } })
+  } catch (e) { next(e) }
+}
 
-    const payload = req.body ?? {}
-    if (!payload.date) payload.date = new Date().toISOString().slice(0, 10)
-
-    const id = await metrics.create(student.id, payload)
-    return res.status(201).json({ status: 'success', data: { id } })
-  } catch (err) { next(err) }
+export async function recomputeMetrics(req, res, next) {
+  try {
+    const userId = Number(req.params.userId)
+    const data = await metrics.recomputeFromRaw(userId)
+    res.json({ status: 'success', data: { metrics: data } })
+  } catch (e) { next(e) }
 }

@@ -8,7 +8,8 @@ export function requireAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.ACCESS_TOKEN_KEY)
     req.user = { id: payload.id, email: payload.email }
     next()
-  } catch {
+  } catch (err) {
+    console.log('JWT verify failed:', err.message)
     return res.status(401).json({ status: 'fail', message: 'Token tidak valid' })
   }
-}
+}  

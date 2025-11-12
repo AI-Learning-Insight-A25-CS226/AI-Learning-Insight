@@ -4,20 +4,20 @@ import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import cors from 'cors'
 import authRoutes from './routes/auth.js'
-import studentRoutes from './routes/student.js'
 import metricsRoutes from './routes/metrics.js'
 import insightsRoutes from './routes/insights.js'
 import { notFoundHandler, errorHandler } from './middlewares/errorHandler.js'
+
 const app = express()
-const openapiDocument = YAML.load('./openAPI.yaml')
-app.use(express.json())
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDocument))
+const openapiDocument = YAML.load('./openapi.yaml')
+app.use(express.json({ limit: '1mb' }))
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDocument))
+app.get('/health', (_req, res) => res.json({ status: 'ok', ml: process.env.ML_SERVICE_URL || null }))
 app.get('/', (_req, res) => res.json({ message: '✅ Backend ready' }))
 app.use('/auth', authRoutes)
-app.use('/students', studentRoutes)
-app.use('/metrics', metricsRoutes)
-app.use('/insights', insightsRoutes)
+app.use(metricsRoutes)
+app.use(insightsRoutes)
 app.use(notFoundHandler)
 app.use(errorHandler)
 

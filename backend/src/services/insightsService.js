@@ -1,138 +1,162 @@
+// src/services/insightsService.js
+import axios from 'axios'
 import { pool } from '../db/pool.js'
-function classifyFromMetrics(m) {
-  const study_hours = Number(m.study_hours ?? 0)
-  const attendance = Number(m.attendance ?? 0)
-  const assignment = Number(m.assignment_completion ?? 0)
-  const motivation = Number(m.motivation ?? 0)
-  const stress = Number(m.stress_level ?? 0)
-  const discussions = Number(m.discussions ?? 0)
-  const resources = Number(m.resources ?? 0)
+import { getByUserId as getMetricsByUserId } from './metricsService.js'
 
-  // FAST → belajar cepat, jam belajar sedikit tapi hasil bagus
-  let fastScore = 0
-  const fastReasons = []
-  if (study_hours <= 2) { fastScore += 2; fastReasons.push({ key: 'study_hours', op: '<=', value: 2, actual: study_hours }) }
-  if (assignment >= 4) { fastScore += 1; fastReasons.push({ key: 'assignment_completion', op: '>=', value: 4, actual: assignment }) }
-  if (motivation >= 4) { fastScore += 1; fastReasons.push({ key: 'motivation', op: '>=', value: 4, actual: motivation }) }
-  if (attendance >= 3) { fastScore += 0.5; fastReasons.push({ key: 'attendance', op: '>=', value: 3, actual: attendance }) }
-  if (stress <= 3) { fastScore += 0.5; fastReasons.push({ key: 'stress_level', op: '<=', value: 3, actual: stress }) }
+const ML_BASE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001'
+const ML_TIMEOUT = Number.parseInt(process.env.ML_HTTP_TIMEOUT_MS || '8000', 10)
 
-  // CONSISTENT → rajin & stabil
-  let consistentScore = 0
-  const consistentReasons = []
-  if (attendance >= 4) { consistentScore += 1.5; consistentReasons.push({ key: 'attendance', op: '>=', value: 4, actual: attendance }) }
-  if (assignment >= 4) { consistentScore += 1.5; consistentReasons.push({ key: 'assignment_completion', op: '>=', value: 4, actual: assignment }) }
-  if (study_hours >= 2 && study_hours <= 4) {
-    consistentScore += 1
-    consistentReasons.push({ key: 'study_hours', op: 'between', value: [2, 4], actual: study_hours })
-  }
-  if (discussions >= 2) { consistentScore += 0.5; consistentReasons.push({ key: 'discussions', op: '>=', value: 2, actual: discussions }) }
-  if (resources >= 2) { consistentScore += 0.5; consistentReasons.push({ key: 'resources', op: '>=', value: 2, actual: resources }) }
-  if (stress >= 2 && stress <= 4) {
-    consistentScore += 0.5
-    consistentReasons.push({ key: 'stress_level', op: 'between', value: [2, 4], actual: stress })
+/**
+ * Normalisasi payload dari ML service (FastAPI).
+ * FastAPI mengembalikan: { status: 'success', data: { label, confidence, reasons, user_id, name, cluster_id } }
+ */
+function normalizeMlResponse(respData) {
+  const ml = respData?.data
+  if (!ml || typeof ml !== 'object') {
+    throw Object.assign(new Error('Invalid ML response shape (missing `data`)'), { status: 502 })
   }
 
-  // REFLECTIVE → jam belajar tinggi, aktif diskusi & sumber
-  let reflectiveScore = 0
-  const reflectiveReasons = []
-  if (study_hours >= 4) { reflectiveScore += 1.5; reflectiveReasons.push({ key: 'study_hours', op: '>=', value: 4, actual: study_hours }) }
-  if (resources >= 4) { reflectiveScore += 1; reflectiveReasons.push({ key: 'resources', op: '>=', value: 4, actual: resources }) }
-  if (discussions >= 4) { reflectiveScore += 1; reflectiveReasons.push({ key: 'discussions', op: '>=', value: 4, actual: discussions }) }
-  if (motivation >= 4) { reflectiveScore += 0.5; reflectiveReasons.push({ key: 'motivation', op: '>=', value: 4, actual: motivation }) }
-  if (stress <= 3) { reflectiveScore += 0.5; reflectiveReasons.push({ key: 'stress_level', op: '<=', value: 3, actual: stress }) }
+  const label      = ml.label ?? 'Unknown'
+  const confidence = typeof ml.confidence === 'number' ? ml.confidence : 0
+  const reasons    = Array.isArray(ml.reasons) ? ml.reasons : []
+  const clusterId  = Number.isInteger(ml.cluster_id) ? ml.cluster_id : -1
+  const name       = typeof ml.name === 'string' ? ml.name : null
+  const userId     = Number.isInteger(ml.user_id) ? ml.user_id : null
 
-  // Pilih label dengan skor tertinggi
-  const scores = [
-    { label: 'Fast', score: fastScore, reasons: fastReasons },
-    { label: 'Consistent', score: consistentScore, reasons: consistentReasons },
-    { label: 'Reflective', score: reflectiveScore, reasons: reflectiveReasons }
-  ].sort((a, b) => b.score - a.score)
-
-  const top = scores[0]
-  const total = scores[0].score + scores[1].score + scores[2].score
-  const confidence = total > 0 ? Number((top.score / total).toFixed(2)) : 0.8
-  const reasons = top.reasons.slice(0, 3).map(r => ({
-    key: r.key,
-    op: r.op,
-    value: r.value,
-    actual: r.actual
-  }))
-
-  return { label: top.label, confidence, reasons }
+  return { label, confidence, reasons, cluster_id: clusterId, name, user_id: userId }
 }
 
 /**
- * Ambil insight terbaru:
- * - mode 'db'  : ambil dari tabel insights
- * - mode 'rule': hitung dari metrics terbaru
- * - mode 'mock': dummy
+ * Bangun payload fitur (metrics) dari DB kalau caller tidak memberi `features`.
  */
-export async function getLatest(studentId, mode = 'rule') {
-  // Mode 1: DB
-  if (mode === 'db') {
-    const { rows } = await pool.query(
-      `SELECT id, label, confidence, reasons, updated_at
-       FROM insights
-       WHERE student_id = $1
-       ORDER BY updated_at DESC
-       LIMIT 1`,
-      [studentId]
-    )
-    if (rows[0]) return rows[0]
+async function buildFeaturesForUser(userId) {
+  const m = await getMetricsByUserId(userId)
+  if (!m) {
+    const err = new Error('metrics not found for user'); err.status = 400
+    throw err
   }
+  return {
+    study_hours: m.study_hours,
+    attendance: m.attendance,
+    assignment_completion: m.assignment_completion,
+    motivation: m.motivation,
+    stress_level: m.stress_level,
+    discussions: m.discussions,
+    resources: m.resources,
+  }
+}
 
-  // Mode 2: Rule-based
-  if (mode === 'rule') {
-    const { rows: mrows } = await pool.query(
-      `SELECT study_hours, attendance, assignment_completion, motivation, stress_level, discussions, resources, updated_at
-       FROM metrics
-       WHERE student_id = $1
-       ORDER BY updated_at DESC
-       LIMIT 1`,
-      [studentId]
-    )
-
-    if (!mrows[0]) {
-      return {
-        label: 'Consistent',
-        confidence: 0.5,
-        reasons: [{ key: 'data', op: 'missing', value: 'metrics' }],
-        updated_at: new Date().toISOString()
-      }
+/**
+ * Panggil ML, lalu simpan history & upsert current insight.
+ * @param {{ userId: number, features?: object, useDbMetricsFallback?: boolean }} params
+ * @returns {{ label: string, confidence: number, reasons: any[], cluster_id: number, user_id: number|null, name: string|null }}
+ */
+export async function predictAndSave({ userId, features, useDbMetricsFallback = true }) {
+  // 0) Siapkan features (metrics)
+  let payload = features
+  if (!payload) {
+    if (!useDbMetricsFallback) {
+      const err = new Error('features is required when useDbMetricsFallback=false'); err.status = 400
+      throw err
     }
-
-    const pred = classifyFromMetrics(mrows[0])
-    return { ...pred, updated_at: mrows[0].updated_at ?? new Date().toISOString() }
+    payload = await buildFeaturesForUser(userId)
   }
 
-  // Mode 3: Mock
-  if (mode === 'mock') {
-    function mockInsight() {
-      const labels = ['Fast', 'Consistent', 'Reflective']
-      const label = labels[Math.floor(Math.random() * labels.length)]
-      const reasons = [{ key: 'study_hours', op: '>=', value: 3 }]
-      return { label, confidence: 0.8, reasons }
-    }
-    const { rows } = await pool.query(
-      `SELECT id, label, confidence, reasons, updated_at
-       FROM insights
-       WHERE student_id = $1
-       ORDER BY updated_at DESC
-       LIMIT 1`,
-      [studentId]
+  // 1) Panggil ML (POST /predict)
+  const resp = await axios.post(
+    `${ML_BASE_URL}/predict`,
+    { student_id: userId, features: payload },
+    { timeout: ML_TIMEOUT }
+  )
+
+  // 2) Normalisasi respons ML
+  const mlNorm = normalizeMlResponse(resp.data)
+
+  // 3) Simpan ke DB dalam transaksi
+  const client = await pool.connect()
+  try {
+    await client.query('begin')
+
+    // History
+    await client.query(
+      `insert into insight_histories
+        (student_id, label, confidence, reasons, raw_features, cluster_id, created_at)
+       values ($1,$2,$3,$4::jsonb,$5::jsonb,$6, now())`,
+      [
+        userId,
+        mlNorm.label,
+        mlNorm.confidence,
+        JSON.stringify(mlNorm.reasons),
+        JSON.stringify(payload),
+        mlNorm.cluster_id,
+      ]
     )
-    return rows[0] || { ...mockInsight(), updated_at: new Date().toISOString() }
+
+    // Current (upsert)
+    await client.query(
+      `insert into insights (student_id, label, confidence, reasons, cluster_id, updated_at)
+       values ($1,$2,$3,$4::jsonb,$5, now())
+       on conflict (student_id) do update set
+         label=excluded.label,
+         confidence=excluded.confidence,
+         reasons=excluded.reasons,
+         cluster_id=excluded.cluster_id,
+         updated_at=now()`,
+      [
+        userId,
+        mlNorm.label,
+        mlNorm.confidence,
+        JSON.stringify(mlNorm.reasons),
+        mlNorm.cluster_id,
+      ]
+    )
+
+    await client.query('commit')
+  } catch (e) {
+    await client.query('rollback')
+    throw e
+  } finally {
+    client.release()
   }
 
-  // Default
+  // 4) Kembalikan payload ringkas yang konsisten
+  return {
+    label: mlNorm.label,
+    confidence: mlNorm.confidence,
+    reasons: mlNorm.reasons,
+    cluster_id: mlNorm.cluster_id,
+    user_id: userId ?? mlNorm.user_id ?? null,
+    name: mlNorm.name ?? null,
+  }
+}
+
+/**
+ * Ambil insight terakhir dari tabel `insights`.
+ */
+export async function getLastInsight(userId) {
   const { rows } = await pool.query(
-    `SELECT id, label, confidence, reasons, updated_at
-     FROM insights
-     WHERE student_id = $1
-     ORDER BY updated_at DESC
-     LIMIT 1`,
-    [studentId]
+    `select student_id, label, confidence, reasons, cluster_id, updated_at
+       from insights
+      where student_id = $1`,
+    [userId]
   )
   return rows[0] || null
+}
+
+/**
+ * List riwayat insight dari tabel `insight_histories`.
+ * @param {number} userId
+ * @param {number} limit
+ * @param {number} offset
+ */
+export async function listHistory(userId, limit = 20, offset = 0) {
+  const { rows } = await pool.query(
+    `select created_at, label, confidence, reasons, cluster_id, raw_features
+       from insight_histories
+      where student_id = $1
+      order by created_at desc
+      limit $2 offset $3`,
+    [userId, limit, offset]
+  )
+  return rows
 }

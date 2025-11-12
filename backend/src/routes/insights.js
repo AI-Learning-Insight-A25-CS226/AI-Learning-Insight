@@ -1,8 +1,11 @@
 import { Router } from 'express'
-import { getMyInsights } from '../controllers/insightsController.js'
 import { requireAuth } from '../middlewares/authMiddleware.js'
+import { createOrUpdateInsight, getInsight } from '../controllers/insightsController.js'
 
-const r = Router()
-r.get('/me', requireAuth, getMyInsights)
+const router = Router()
+router.use(requireAuth)
 
-export default r
+router.get('/users/:userId/insights', getInsight)
+router.post('/users/:userId/insights', createOrUpdateInsight)
+
+export default router

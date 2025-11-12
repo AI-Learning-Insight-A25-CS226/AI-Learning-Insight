@@ -1,9 +1,13 @@
+// src/routes/metrics.js
 import { Router } from 'express'
-import { listMyMetrics, addMetric } from '../controllers/metricsController.js'
 import { requireAuth } from '../middlewares/authMiddleware.js'
+import { getMetrics, upsertMetrics, recomputeMetrics } from '../controllers/metricsController.js'
 
-const r = Router()
-r.get('/me', requireAuth, listMyMetrics)
-r.post('/', requireAuth, addMetric)
+const router = Router()
+router.use(requireAuth)
 
-export default r
+router.get('/users/:userId/metrics', getMetrics)
+router.put('/users/:userId/metrics', upsertMetrics)
+router.post('/users/:userId/metrics/recompute', recomputeMetrics)
+
+export default router

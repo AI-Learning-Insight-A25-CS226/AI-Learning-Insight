@@ -4,13 +4,16 @@
     "scripts": {
         "dev": "nodemon --env-file .env src/server.js",
         "start": "node src/server.js",
+        "docs": "npx swagger-ui-watcher ./openapi.yaml",
         "db:migrate": "node ./scripts/run-sql.js src/db/migrations/001_init.sql",
+        "db:migrate:002": "node ./scripts/run-sql.js src/db/migrations/002_add_password_hash.sql",
         "db:seed": "node ./scripts/run-sql.js src/db/seed/seed.sql"
     },
     "dependencies": {
+        "axios": "^1.13.2",
         "bcrypt": "^5.1.1",
         "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
+        "dotenv": "^16.6.1",
         "express": "^4.19.2",
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
