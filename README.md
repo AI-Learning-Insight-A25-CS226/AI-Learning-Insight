@@ -15,21 +15,22 @@ AI-Learning-Insight/
 Cara Menjalankan Program
 Jalankan Machine Learning Service (FastAPI)
 ```
-cd D:\Dokumen\COURSE DICODING\AI-Learning-Insight\ml-service
+cd ml-service
 python main.py
 ```
 Jalankan Backend API (Node.js + Express)
 ```
-cd D:\Dokumen\COURSE DICODING\AI-Learning-Web\backend
+cd backend
 npm install
 npm run db:migrate
 npm run dev
 ```
 Jalankan Frontend (React + Vite)
 ```
-cd D:\Dokumen\COURSE DICODING\AI-Learning-Web\frontend
+cd frontend
 npm install
 npm run dev
 ```
+
 
 
