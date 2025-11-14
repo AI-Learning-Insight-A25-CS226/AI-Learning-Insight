@@ -46,7 +46,6 @@ Berisi definisi lengkap endpoint backend, termasuk:
 - `/auth/register`, `/auth/login`, `/auth/me`
 - `/users/{userId}/metrics` (GET & PUT)
 - `/users/{userId}/insights` (GET & POST)
-- 
 Dokumen ini mencakup:
 - Struktur request & response  
 - Parameter path  
@@ -71,4 +70,5 @@ File ini adalah koleksi Postman siap pakai untuk mengetes API:
 # 📌 Catatan Penting
 - Jika API berubah, **openAPI.yaml** dan **Postman Collection** harus diperbarui.  
 - Dokumentasi ini sangat penting untuk integrasi FE–BE–ML.
+
 
