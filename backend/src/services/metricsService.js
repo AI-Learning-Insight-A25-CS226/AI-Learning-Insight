@@ -63,7 +63,6 @@ export async function getMetricsByStudentId(studentId) {
 }
 
 export async function getByUserId(userId) {
-  // di DB, student_id = users.id
   return getMetricsByStudentId(userId)
 }
 

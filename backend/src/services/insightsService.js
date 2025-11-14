@@ -29,8 +29,12 @@ const FEATURE_COLUMNS = [
 function normalizeMlResponse(respData) {
   const ml = respData?.data
   if (!ml || typeof ml !== 'object') {
-    throw Object.assign(new Error('Invalid ML response shape (missing `data`)'), { status: 502 })
+    throw Object.assign(
+      new Error('Invalid ML response shape (missing `data`)'),
+      { status: 502 }
+    )
   }
+
   const label      = ml.label ?? 'Unknown'
   const confidence = typeof ml.confidence === 'number' ? ml.confidence : 0
   const reasons    = Array.isArray(ml.reasons) ? ml.reasons : []
@@ -44,7 +48,7 @@ function normalizeMlResponse(respData) {
 
 export async function predictAndSave({ studentId }) {
   studentId = parseInt(studentId, 10)
-  if (isNaN(studentId)) {
+  if (Number.isNaN(studentId)) {
     const err = new Error('studentId must be an integer')
     err.status = 400
     throw err
@@ -57,6 +61,7 @@ export async function predictAndSave({ studentId }) {
   )
 
   const mlNorm = normalizeMlResponse(resp.data)
+
   const featuresFromMl = {}
   FEATURE_COLUMNS.forEach((col) => {
     const v = mlNorm.features && Object.prototype.hasOwnProperty.call(mlNorm.features, col)
@@ -68,7 +73,9 @@ export async function predictAndSave({ studentId }) {
   const client = await pool.connect()
   try {
     await client.query('begin')
+
     await upsertMetricsFromML(studentId, featuresFromMl)
+
     await client.query(
       `insert into insight_histories
         (student_id, label, confidence, reasons, raw_features, cluster_id, created_at)
@@ -120,6 +127,7 @@ export async function predictAndSave({ studentId }) {
 }
 
 export async function getLastInsight(studentId) {
+  studentId = parseInt(studentId, 10)
   const { rows } = await pool.query(
     `select student_id, label, confidence, reasons, cluster_id, updated_at
        from insights
@@ -130,6 +138,7 @@ export async function getLastInsight(studentId) {
 }
 
 export async function listHistory(studentId, limit = 20, offset = 0) {
+  studentId = parseInt(studentId, 10)
   const { rows } = await pool.query(
     `select created_at, label, confidence, reasons, cluster_id, raw_features
        from insight_histories
