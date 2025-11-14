@@ -9,27 +9,33 @@ Proyek ini terdiri dari tiga komponen utama:
 ## Struktur Proyek
 
 AI-Learning-Insight/
-│
+```
+|
 ├── ml-service/       # FastAPI model inference service
 ├── backend/          # Node.js RESTful API service
 ├── frontend/         # React dashboard app
+```
 --------------------------------------------------------------------------------------
 ## Running Program
 
 1. Jalankan Machine Learning Service (FastAPI)
+```
 cd ml-service
 python main.py
-
+```
 2. Jalankan Backend API (Node.js + Express)
+```
 cd backend
 npm install
 node scripts/run-sql.js
 npm run dev
-
+```
 3. Jalankan Frontend (React + Vite)
+```
 cd frontend
 npm install
 npm run dev
+```
 --------------------------------------------------------------------------------------
 ## Dokumentasi API
 
@@ -65,3 +71,4 @@ File ini adalah koleksi Postman siap pakai untuk mengetes API:
 # 📌 Catatan Penting
 - Jika API berubah, **openAPI.yaml** dan **Postman Collection** harus diperbarui.  
 - Dokumentasi ini sangat penting untuk integrasi FE–BE–ML.
+
