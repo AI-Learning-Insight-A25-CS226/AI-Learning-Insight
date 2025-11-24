@@ -12,8 +12,11 @@ export function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, SECRET)
-    // payload harus sama dengan yang kamu sign di login
-    req.user = { id: payload.id, email: payload.email }
+    req.user = { 
+      id: payload.developerId,
+      developerId: payload.developerId,
+      email: payload.email 
+    }    
     next()
   } catch (err) {
     console.log('JWT verify failed:', err.message)

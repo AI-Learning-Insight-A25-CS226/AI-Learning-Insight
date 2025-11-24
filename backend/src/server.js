@@ -3,7 +3,6 @@ import express from 'express'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import cors from 'cors'
-import axios from 'axios'
 import authRoutes from './routes/auth.js'
 import metricsRoutes from './routes/metrics.js'
 import insightsRoutes from './routes/insights.js'
@@ -14,7 +13,12 @@ const openapiDocument = YAML.load('./openapi.yaml')
 app.use(express.json({ limit: '1mb' }))
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDocument))
-app.get('/health', (_req, res) => res.json({ status: 'ok', ml: process.env.ML_SERVICE_URL || null }))
+app.get('/health', (_req, res) => 
+  res.json({ 
+    status: 'ok', 
+    ml: process.env.ML_SERVICE_URL || null 
+    })
+  )
 app.get('/', (_req, res) => res.json({ message: '✅ Backend ready' }))
 // debugging endpoint untuk cek koneksi ML service
 // app.get('/api/debug/ml', async (_req, res) => {
@@ -35,8 +39,8 @@ app.get('/', (_req, res) => res.json({ message: '✅ Backend ready' }))
 //   }
 // })
 app.use('/auth', authRoutes)
-app.use(metricsRoutes)
-app.use(insightsRoutes)
+app.use('/api', metricsRoutes)
+app.use('/api', insightsRoutes)
 app.use(notFoundHandler)
 app.use(errorHandler)
 

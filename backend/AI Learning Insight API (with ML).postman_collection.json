@@ -1,804 +1,137 @@
 {
 	"info": {
-	  "_postman_id": "98b17214-e329-477e-b895-3f684e9a16be",
-	  "name": "AI Learning Insight API (with ML)",
-	  "description": "RESTful API untuk aplikasi AI Learning Insight, terintegrasi dengan FastAPI ML Service.\nMendukung autentikasi JWT, manajemen metrics pengguna (10 fitur perilaku belajar),\ndan integrasi prediksi insight gaya belajar (learning_style + confidence_score).\n",
-	  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-	  "_exporter_id": "49068314"
+	  "_postman_id": "8b6e7d43-9a86-4a07-a05a-12fd4fbcd111",
+	  "name": "AI Learning Insight API (UPDATED)",
+	  "description": "RESTful API dengan JWT Auth, Learning Metrics, dan Insight Text dari ML Service.",
+	  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 	  {
 		"name": "auth",
 		"item": [
 		  {
-			"name": "login",
-			"item": [
-			  {
-				"name": "Login untuk mendapatkan token JWT",
-				"request": {
-				  "method": "POST",
-				  "header": [
-					{
-					  "key": "Content-Type",
-					  "value": "application/json"
-					}
-				  ],
-				  "body": {
-					"mode": "raw",
-					"raw": "{\n  \"email\": \"nrizki@dicoding.com\",\n  \"password\": \"12345\"\n}",
-					"options": {
-					  "raw": {
-						"headerFamily": "json",
-						"language": "json"
-					  }
-					}
-				  },
-				  "url": {
-					"raw": "{{baseUrl}}/auth/login",
-					"host": [
-					  "{{baseUrl}}"
-					],
-					"path": [
-					  "auth",
-					  "login"
-					]
-				  }
-				},
-				"response": [
-				  {
-					"name": "Login berhasil, mengembalikan access token",
-					"originalRequest": {
-					  "method": "POST",
-					  "header": [
-						{
-						  "key": "Content-Type",
-						  "value": "application/json"
-						}
-					  ],
-					  "body": {
-						"mode": "raw",
-						"raw": "{\n  \"email\": \"nrizki@dicoding.com\",\n  \"password\": \"12345\"\n}",
-						"options": {
-						  "raw": {
-							"headerFamily": "json",
-							"language": "json"
-						  }
-						}
-					  },
-					  "url": {
-						"raw": "{{baseUrl}}/auth/login",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "auth",
-						  "login"
-						]
-					  }
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
-					  {
-						"key": "Content-Type",
-						"value": "application/json"
-					  }
-					],
-					"cookie": [],
-					"body": "{\n  \"access_token\": \"<jwt_token>\",\n  \"token_type\": \"bearer\"\n}"
-				  },
-				  {
-					"name": "Kredensial salah",
-					"originalRequest": {
-					  "method": "POST",
-					  "header": [
-						{
-						  "key": "Content-Type",
-						  "value": "application/json"
-						}
-					  ],
-					  "body": {
-						"mode": "raw",
-						"raw": "{\n  \"email\": \"wrong@mail.com\",\n  \"password\": \"wrongpass\"\n}",
-						"options": {
-						  "raw": {
-							"headerFamily": "json",
-							"language": "json"
-						  }
-						}
-					  },
-					  "url": {
-						"raw": "{{baseUrl}}/auth/login",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "auth",
-						  "login"
-						]
-					  }
-					},
-					"status": "Unauthorized",
-					"code": 401,
-					"_postman_previewlanguage": "json",
-					"header": [
-					  {
-						"key": "Content-Type",
-						"value": "application/json"
-					  }
-					],
-					"cookie": [],
-					"body": "{\n  \"status\": \"fail\",\n  \"message\": \"invalid credentials\"\n}"
-				  }
-				]
+			"name": "Login",
+			"request": {
+			  "method": "POST",
+			  "header": [
+				{ "key": "Content-Type", "value": "application/json" }
+			  ],
+			  "body": {
+				"mode": "raw",
+				"raw": "{\n  \"email\": \"istiabudi@gmail.com\",\n  \"password\": \"12345\"\n}"
+			  },
+			  "url": {
+				"raw": "{{baseUrl}}/auth/login",
+				"host": ["{{baseUrl}}"],
+				"path": ["auth", "login"]
 			  }
-			]
+			}
 		  },
 		  {
-			"name": "me",
-			"item": [
-			  {
-				"name": "Mendapatkan data user saat ini",
-				"request": {
-				  "auth": {
-					"type": "bearer",
-					"bearer": [
-					  {
-						"key": "token",
-						"value": "{{bearerToken}}",
-						"type": "string"
-					  }
-					]
-				  },
-				  "method": "GET",
-				  "header": [
-					{
-					  "key": "Accept",
-					  "value": "application/json"
-					}
-				  ],
-				  "url": {
-					"raw": "{{baseUrl}}/auth/me",
-					"host": [
-					  "{{baseUrl}}"
-					],
-					"path": [
-					  "auth",
-					  "me"
-					]
-				  }
-				},
-				"response": [
-				  {
-					"name": "Data user saat ini",
-					"originalRequest": {
-					  "method": "GET",
-					  "header": [
-						{
-						  "key": "Accept",
-						  "value": "application/json"
-						},
-						{
-						  "key": "Authorization",
-						  "value": "Bearer <token>",
-						  "description": "Added as a part of security scheme: bearer"
-						}
-					  ],
-					  "url": {
-						"raw": "{{baseUrl}}/auth/me",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "auth",
-						  "me"
-						]
-					  }
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
-					  {
-						"key": "Content-Type",
-						"value": "application/json"
-					  }
-					],
-					"cookie": [],
-					"body": "{\n  \"id\": 938276,\n  \"email\": \"nrizki@dicoding.com\",\n  \"name\": \"Nur Rizki Adi Prasetyo\"\n}"
-				  },
-				  {
-					"name": "Token tidak valid",
-					"originalRequest": {
-					  "method": "GET",
-					  "header": [
-						{
-						  "key": "Authorization",
-						  "value": "Bearer <token>",
-						  "description": "Added as a part of security scheme: bearer"
-						}
-					  ],
-					  "url": {
-						"raw": "{{baseUrl}}/auth/me",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "auth",
-						  "me"
-						]
-					  }
-					},
-					"status": "Unauthorized",
-					"code": 401,
-					"_postman_previewlanguage": "json",
-					"header": [
-					  {
-						"key": "Content-Type",
-						"value": "application/json"
-					  }
-					],
-					"cookie": [],
-					"body": "{\n  \"status\": \"fail\",\n  \"message\": \"invalid token\"\n}"
-				  }
-				]
+			"name": "Me",
+			"request": {
+			  "method": "GET",
+			  "auth": {
+				"type": "bearer",
+				"bearer": [{ "key": "token", "value": "{{bearerToken}}", "type": "string" }]
+			  },
+			  "url": {
+				"raw": "{{baseUrl}}/auth/me",
+				"host": ["{{baseUrl}}"],
+				"path": ["auth", "me"]
 			  }
-			]
+			}
 		  }
 		]
 	  },
+  
 	  {
-		"name": "users",
+		"name": "developers",
 		"item": [
 		  {
-			"name": "{userId}",
+			"name": "{developerId}",
 			"item": [
 			  {
-				"name": "metrics",
-				"item": [
-				  {
-					"name": "Melihat metrics user (10 fitur belajar)",
-					"request": {
-					  "auth": {
-						"type": "bearer",
-						"bearer": [
-						  {
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						  }
-						]
-					  },
-					  "method": "GET",
-					  "header": [
-						{
-						  "key": "Accept",
-						  "value": "application/json"
-						}
-					  ],
-					  "url": {
-						"raw": "{{baseUrl}}/users/:userId/metrics",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "users",
-						  ":userId",
-						  "metrics"
-						],
-						"variable": [
-						  {
-							"key": "userId",
-							"value": "938276"
-						  }
-						]
-					  }
-					},
-					"response": [
-					  {
-						"name": "Metrics berhasil diambil",
-						"originalRequest": {
-						  "method": "GET",
-						  "header": [
-							{
-							  "key": "Accept",
-							  "value": "application/json"
-							},
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/metrics",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "metrics"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "OK",
-						"code": 200,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"metrics\": {\n      \"student_id\": 938276,\n      \"total_materi_selesai\": 230,\n      \"avg_durasi_materi_detik\": 20824.43913,\n      \"total_review\": 105,\n      \"total_hari_aktif\": 87,\n      \"std_dev_materi_harian\": 5.600435314,\n      \"avg_skor_kuis\": 84.20224719,\n      \"pass_rate_kuis\": 0.8314606742,\n      \"total_kuis_diambil\": 178,\n      \"avg_rating_submission\": 2.372881356,\n      \"total_submissions\": 59,\n      \"last_calculated_at\": \"2025-11-10T23:23:16.146Z\"\n    }\n  }\n}"
-					  },
-					  {
-						"name": "Metrics belum ada untuk user ini",
-						"originalRequest": {
-						  "method": "GET",
-						  "header": [
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/metrics",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "metrics"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "Not Found",
-						"code": 404,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"fail\",\n  \"message\": \"metrics not found\"\n}"
-					  }
-					]
+				"name": "Get Metrics",
+				"request": {
+				  "method": "GET",
+				  "auth": {
+					"type": "bearer",
+					"bearer": [{ "key": "token", "value": "{{bearerToken}}"}]
 				  },
-				  {
-					"name": "Update atau buat metrics baru secara manual",
-					"request": {
-					  "auth": {
-						"type": "bearer",
-						"bearer": [
-						  {
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						  }
-						]
-					  },
-					  "method": "PUT",
-					  "header": [
-						{
-						  "key": "Content-Type",
-						  "value": "application/json"
-						}
-					  ],
-					  "body": {
-						"mode": "raw",
-						"raw": "{\n  \"total_materi_selesai\": 12,\n  \"avg_durasi_materi_detik\": 320.5,\n  \"total_review\": 5,\n  \"total_hari_aktif\": 7,\n  \"std_dev_materi_harian\": 1.2,\n  \"avg_skor_kuis\": 82.5,\n  \"pass_rate_kuis\": 0.8,\n  \"total_kuis_diambil\": 4,\n  \"avg_rating_submission\": 4.3,\n  \"total_submissions\": 3\n}",
-						"options": {
-						  "raw": {
-							"headerFamily": "json",
-							"language": "json"
-						  }
-						}
-					  },
-					  "url": {
-						"raw": "{{baseUrl}}/users/:userId/metrics",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "users",
-						  ":userId",
-						  "metrics"
-						],
-						"variable": [
-						  {
-							"key": "userId",
-							"value": "938276"
-						  }
-						]
-					  },
-					  "description": "Endpoint ini dapat digunakan jika ingin mengisi / mengedit metrics secara manual\n(misalnya untuk keperluan testing). Pada alur normal, metrics biasanya diisi oleh\nproses otomatis (recompute dari raw data / ML).\n"
-					},
-					"response": [
-					  {
-						"name": "Metrics berhasil diperbarui",
-						"originalRequest": {
-						  "method": "PUT",
-						  "header": [
-							{
-							  "key": "Content-Type",
-							  "value": "application/json"
-							},
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "body": {
-							"mode": "raw",
-							"raw": "{\n  \"total_materi_selesai\": 12,\n  \"avg_durasi_materi_detik\": 320.5,\n  \"total_review\": 5,\n  \"total_hari_aktif\": 7,\n  \"std_dev_materi_harian\": 1.2,\n  \"avg_skor_kuis\": 82.5,\n  \"pass_rate_kuis\": 0.8,\n  \"total_kuis_diambil\": 4,\n  \"avg_rating_submission\": 4.3,\n  \"total_submissions\": 3\n}",
-							"options": {
-							  "raw": {
-								"headerFamily": "json",
-								"language": "json"
-							  }
-							}
-						  },
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/metrics",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "metrics"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "OK",
-						"code": 200,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"metrics\": {\n      \"student_id\": 938276,\n      \"total_materi_selesai\": 12,\n      \"avg_durasi_materi_detik\": 320.5,\n      \"total_review\": 5,\n      \"total_hari_aktif\": 7,\n      \"std_dev_materi_harian\": 1.2,\n      \"avg_skor_kuis\": 82.5,\n      \"pass_rate_kuis\": 0.8,\n      \"total_kuis_diambil\": 4,\n      \"avg_rating_submission\": 4.3,\n      \"total_submissions\": 3,\n      \"last_calculated_at\": \"2025-11-10T23:23:16.146Z\"\n    }\n  }\n}"
-					  },
-					  {
-						"name": "Bad request",
-						"originalRequest": {
-						  "method": "PUT",
-						  "header": [
-							{
-							  "key": "Content-Type",
-							  "value": "application/json"
-							},
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "body": {
-							"mode": "raw",
-							"raw": "{\n  \"total_materi_selesai\": \"invalid\",\n  \"avg_durasi_materi_detik\": 320.5\n}",
-							"options": {
-							  "raw": {
-								"headerFamily": "json",
-								"language": "json"
-							  }
-							}
-						  },
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/metrics",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "metrics"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "Bad Request",
-						"code": 400,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"fail\",\n  \"message\": \"invalid metrics payload\"\n}"
-					  }
+				  "url": {
+					"raw": "{{baseUrl}}/api/developers/:developerId/metrics",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "developers", ":developerId", "metrics"],
+					"variable": [
+					  { "key": "developerId", "value": "3390" }
 					]
 				  }
-				]
+				}
 			  },
+  
 			  {
-				"name": "insights",
-				"item": [
-				  {
-					"name": "Prediksi insight gaya belajar baru (terhubung dengan ML service)",
-					"request": {
-					  "auth": {
-						"type": "bearer",
-						"bearer": [
-						  {
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						  }
-						]
-					  },
-					  "method": "POST",
-					  "header": [
-						{
-						  "key": "Accept",
-						  "value": "application/json"
-						}
-					  ],
-					  "url": {
-						"raw": "{{baseUrl}}/users/:userId/insights",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "users",
-						  ":userId",
-						  "insights"
-						],
-						"variable": [
-						  {
-							"key": "userId",
-							"value": "938276"
-						  }
-						]
-					  },
-					  "description": "Memanggil FastAPI ML service untuk:\n- Menggunakan metrics yang tersedia,\n- Menentukan gaya belajar (learning_style),\n- Menyimpan insight terkini dan history.\nTidak perlu mengirim body.\n"
-					},
-					"response": [
-					  {
-						"name": "Prediksi insight berhasil",
-						"originalRequest": {
-						  "method": "POST",
-						  "header": [
-							{
-							  "key": "Accept",
-							  "value": "application/json"
-							},
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/insights",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "insights"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "OK",
-						"code": 200,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"insight\": {\n      \"student_id\": 938276,\n      \"learning_style\": \"Fast Learner\",\n      \"confidence_score\": 0.87,\n      \"name\": \"Nur Rizki Adi Prasetyo\"\n    }\n  }\n}"
-					  },
-					  {
-						"name": "User tidak ditemukan",
-						"originalRequest": {
-						  "method": "POST",
-						  "header": [
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/insights",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "insights"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "Not Found",
-						"code": 404,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"fail\",\n  \"message\": \"user not found\"\n}"
-					  }
-					]
+				"name": "Update Metrics (Manual)",
+				"request": {
+				  "method": "PUT",
+				  "auth": {
+					"type": "bearer",
+					"bearer": [{ "value": "{{bearerToken}}" }]
 				  },
-				  {
-					"name": "Mendapatkan insight terbaru user",
-					"request": {
-					  "auth": {
-						"type": "bearer",
-						"bearer": [
-						  {
-							"key": "token",
-							"value": "{{bearerToken}}",
-							"type": "string"
-						  }
-						]
-					  },
-					  "method": "GET",
-					  "header": [
-						{
-						  "key": "Accept",
-						  "value": "application/json"
-						}
-					  ],
-					  "url": {
-						"raw": "{{baseUrl}}/users/:userId/insights",
-						"host": [
-						  "{{baseUrl}}"
-						],
-						"path": [
-						  "users",
-						  ":userId",
-						  "insights"
-						],
-						"variable": [
-						  {
-							"key": "userId",
-							"value": "938276"
-						  }
-						]
-					  }
-					},
-					"response": [
-					  {
-						"name": "Insight terakhir berhasil diambil",
-						"originalRequest": {
-						  "method": "GET",
-						  "header": [
-							{
-							  "key": "Accept",
-							  "value": "application/json"
-							},
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/insights",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "insights"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "OK",
-						"code": 200,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"insight\": {\n      \"student_id\": 938276,\n      \"learning_style\": \"Fast Learner\",\n      \"confidence_score\": 0.87,\n      \"updated_at\": \"2025-11-10T23:23:16.146Z\"\n    }\n  }\n}"
-					  },
-					  {
-						"name": "Insight belum tersedia untuk user ini",
-						"originalRequest": {
-						  "method": "GET",
-						  "header": [
-							{
-							  "key": "Authorization",
-							  "value": "Bearer <token>",
-							  "description": "Added as a part of security scheme: bearer"
-							}
-						  ],
-						  "url": {
-							"raw": "{{baseUrl}}/users/:userId/insights",
-							"host": [
-							  "{{baseUrl}}"
-							],
-							"path": [
-							  "users",
-							  ":userId",
-							  "insights"
-							],
-							"variable": [
-							  {
-								"key": "userId"
-							  }
-							]
-						  }
-						},
-						"status": "Not Found",
-						"code": 404,
-						"_postman_previewlanguage": "json",
-						"header": [
-						  {
-							"key": "Content-Type",
-							"value": "application/json"
-						  }
-						],
-						"cookie": [],
-						"body": "{\n  \"status\": \"fail\",\n  \"message\": \"insight not found\"\n}"
-					  }
+				  "header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"total_active_days\": 100,\n  \"avg_completion_time_hours\": 5,\n  \"total_journeys_completed\": 20,\n  \"rejection_ratio\": 0.44,\n  \"avg_exam_score\": 78\n}"
+				  },
+				  "url": {
+					"raw": "{{baseUrl}}/api/developers/:developerId/metrics",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "developers", ":developerId", "metrics"],
+					"variable": [
+					  { "key": "developerId", "value": "3390" }
 					]
 				  }
-				]
+				}
+			  },
+  
+			  {
+				"name": "Predict Insight (ML)",
+				"request": {
+				  "method": "POST",
+				  "auth": {
+					"type": "bearer",
+					"bearer": [{ "value": "{{bearerToken}}" }]
+				  },
+				  "url": {
+					"raw": "{{baseUrl}}/api/developers/:developerId/insights",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "developers", ":developerId", "insights"],
+					"variable": [
+					  { "key": "developerId", "value": "3390" }
+					]
+				  }
+				}
+			  },
+  
+			  {
+				"name": "Get Latest Insight",
+				"request": {
+				  "method": "GET",
+				  "auth": {
+					"type": "bearer",
+					"bearer": [{ "value": "{{bearerToken}}" }]
+				  },
+				  "url": {
+					"raw": "{{baseUrl}}/api/developers/:developerId/insights",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "developers", ":developerId", "insights"],
+					"variable": [
+					  { "key": "developerId", "value": "3390" }
+					]
+				  }
+				}
 			  }
 			]
 		  }
@@ -806,13 +139,7 @@
 	  }
 	],
 	"variable": [
-	  {
-		"key": "baseUrl",
-		"value": "http://localhost:5000"
-	  },
-	  {
-		"key": "bearerToken",
-		"value": ""
-	  }
+	  { "key": "baseUrl", "value": "http://localhost:5000" },
+	  { "key": "bearerToken", "value": "" }
 	]
   }  

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import 'dotenv/config'
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import { pool } from '../src/db/pool.js'
 
 async function main () {

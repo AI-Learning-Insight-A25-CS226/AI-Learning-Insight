@@ -9,7 +9,7 @@ export async function findByEmail(email) {
       email,
       name,
       password
-    from users
+    from developers
     where email = $1
     `,
     [email]
@@ -18,13 +18,6 @@ export async function findByEmail(email) {
 }
 
 export async function verifyPassword(plainPassword, hashedPassword) {
-  if (
-    typeof plainPassword !== 'string' ||
-    typeof hashedPassword !== 'string' ||
-    !hashedPassword.trim()
-  ) {
-    return false
-  }
-
+  if (!plainPassword || !hashedPassword) return false
   return bcrypt.compare(plainPassword, hashedPassword)
 }

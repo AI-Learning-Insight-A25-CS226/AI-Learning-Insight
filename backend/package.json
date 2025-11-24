@@ -6,7 +6,6 @@
         "start": "node src/server.js",
         "docs": "npx swagger-ui-watcher ./openapi.yaml",
         "db:migrate": "node ./scripts/run-sql.js src/db/migrations/001_init.sql",
-        "db:migrate:002": "node ./scripts/run-sql.js src/db/migrations/002_add_password_hash.sql",
         "db:seed": "node ./scripts/run-sql.js src/db/seed/seed.sql"
     },
     "dependencies": {

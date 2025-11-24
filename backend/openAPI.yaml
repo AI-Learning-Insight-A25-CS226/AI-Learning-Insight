@@ -1,11 +1,9 @@
+openapi: 3.0.0
 info:
-  title: AI Learning Insight API (with ML)
-  description: >
-    RESTful API untuk aplikasi AI Learning Insight.
-    Mendukung JWT auth, manajemen metrics (10 fitur perilaku belajar),
-    dan integrasi FastAPI ML service untuk prediksi gaya belajar.
+  title: AI Learning Insight API (Updated)
   version: 1.0.0
-
+  description: >
+    API dengan JWT Auth, Learning Metrics, dan Insight Text dari ML Service.
 servers:
   - url: http://localhost:5000
 
@@ -13,23 +11,21 @@ paths:
 
   /auth/login:
     post:
-      summary: Login untuk mendapatkan token JWT
+      summary: Login dan mendapatkan token JWT
       requestBody:
         required: true
         content:
           application/json:
             example:
-              email: "nrizki@dicoding.com"
+              email: "istiabudi@gmail.com"
               password: "12345"
       responses:
         "200":
-          description: Login berhasil (mengembalikan access token)
-        "401":
-          description: Kredensial salah
+          description: Login berhasil
 
   /auth/me:
     get:
-      summary: Mendapatkan data user saat ini
+      summary: Mendapatkan informasi user yang sedang login
       security:
         - bearerAuth: []
       responses:
@@ -38,42 +34,28 @@ paths:
         "401":
           description: Token tidak valid
 
-  /users/{userId}/metrics:
+  /api/developers/{developerId}/metrics:
     get:
-      summary: Melihat metrics user (10 fitur belajar)
+      summary: Mendapatkan learning metrics developer
       security:
         - bearerAuth: []
       parameters:
-        - name: userId
+        - name: developerId
           in: path
           required: true
           schema: { type: integer }
       responses:
         "200":
           description: Metrics ditemukan
-          content:
-            application/json:
-              example:
-                total_materi_selesai: 1773
-                avg_durasi_materi_detik: 5914.252115
-                total_review: 442
-                total_hari_aktif: 111
-                std_dev_materi_harian: 22.99129558
-                avg_skor_kuis: 71.45833333
-                pass_rate_kuis: 0.5982142857
-                total_kuis_diambil: 336
-                avg_rating_submission: 2.25862069
-                total_submissions: 58
-                last_calculated_at: "2025-11-10T23:23:16.146Z"
         "404":
-          description: Metrics belum tersedia
+          description: Metrics tidak ditemukan
 
     put:
-      summary: Membuat / update metrics secara manual
+      summary: Update learning metrics secara manual
       security:
         - bearerAuth: []
       parameters:
-        - name: userId
+        - name: developerId
           in: path
           required: true
           schema: { type: integer }
@@ -82,57 +64,50 @@ paths:
         content:
           application/json:
             example:
-              total_materi_selesai: 12
-              avg_durasi_materi_detik: 320.5
-              total_review: 5
-              total_hari_aktif: 7
-              std_dev_materi_harian: 1.2
-              avg_skor_kuis: 82.5
-              pass_rate_kuis: 0.8
-              total_kuis_diambil: 4
-              avg_rating_submission: 4.3
-              total_submissions: 3
+              total_active_days: 100
+              avg_completion_time_hours: 5
+              total_journeys_completed: 20
+              rejection_ratio: 0.33
+              avg_exam_score: 82
       responses:
         "200":
           description: Metrics berhasil diperbarui
-        "400":
-          description: Bad Request
 
-  /users/{userId}/insights:
+  /api/developers/{developerId}/insights:
     post:
-      summary: Meminta prediksi insight baru via ML service
-      description: >
-        Backend otomatis memanggil ML service untuk:
-        - menghitung fitur belajar dari data,
-        - menentukan gaya belajar (learning_style),
-        - menyimpan metrics, insight terkini, dan history.
-        Tidak perlu mengirim body.
+      summary: Menghasilkan insight baru via ML (termasuk insight_text)
       security:
         - bearerAuth: []
       parameters:
-        - name: userId
+        - name: developerId
           in: path
           required: true
           schema: { type: integer }
       responses:
         "200":
-          description: Insight berhasil diproses
+          description: Insight berhasil dihasilkan
           content:
             application/json:
               example:
-                student_id: 938276
-                learning_style: "Fast Learner"
-                confidence_score: 0.87
-                name: "Nur Rizki Adi Prasetyo"
-        "404":
-          description: User tidak ditemukan
+                developer_id: 3390
+                name: "ISTIA BUDI"
+                learning_style: "Reflective Learner"
+                confidence_score: 1
+                cluster_id: 2
+                insight_text: "Anda adalah tipe reflective learner..."
+                features:
+                  total_active_days: 133
+                  avg_completion_time_hours: 2.3
+                  total_journeys_completed: 55
+                  rejection_ratio: 0.49
+                  avg_exam_score: 79.8
 
     get:
-      summary: Mendapatkan insight terbaru user
+      summary: Mendapatkan insight terbaru developer
       security:
         - bearerAuth: []
       parameters:
-        - name: userId
+        - name: developerId
           in: path
           required: true
           schema: { type: integer }
@@ -142,12 +117,13 @@ paths:
           content:
             application/json:
               example:
-                student_id: 938276
-                learning_style: "Fast Learner"
-                confidence_score: 0.87
-                updated_at: "2025-11-10T23:23:16.146Z"
-        "404":
-          description: Insight belum tersedia
+                developer_id: 3390
+                name: "ISTIA BUDI"
+                learning_style: "Reflective Learner"
+                confidence_score: 1
+                insight_text: "Anda belajar dengan cara reflektif..."
+                cluster_label: 2
+                updated_at: "2025-11-24T14:45:52.904Z"
 
 components:
   securitySchemes:

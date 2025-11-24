@@ -14,7 +14,12 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem("token");
 
     if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
     }
     setLoading(false);
   }, []);
@@ -22,6 +27,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", { email, password });
+
+      // Struktur backend:
+      // {
+      //   status: "success",
+      //   data: {
+      //     access_token,
+      //     token_type,
+      //     user: { id, email, name }
+      //   }
+      // }
       const { access_token, user } = response.data.data;
 
       localStorage.setItem("token", access_token);
@@ -30,21 +45,14 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.message || "Login gagal",
-      };
-    }
-  };
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Login gagal";
 
-  const register = async (userData) => {
-    try {
-      const response = await api.post("/auth/register", userData);
-      return { success: true, data: response.data };
-    } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || "Registrasi gagal",
+        error: message,
       };
     }
   };
@@ -58,9 +66,9 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     login,
-    register,
     logout,
     loading,
+    isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,6 +1,7 @@
 import warnings
 import pandas as pd
-import joblib
+import pickle
+from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -8,190 +9,290 @@ from contextlib import asynccontextmanager
 
 warnings.filterwarnings('ignore')
 
-try:
-    model = joblib.load('model/model_kmeans_final.joblib')
-    scaler = joblib.load('model/scaler_data_final.joblib')
-except FileNotFoundError as e:
-    print(f"Error: File model/scaler tidak ditemukan. {e}")
-    raise SystemExit("Gagal memuat model atau scaler. Pastikan file ada di folder 'model/'.")
+# Folder tempat main.py berada
+BASE_DIR = Path(__file__).resolve().parent
 
-CLUSTER_MAP = {
-    2: "Fast Learner",
-    0: "Reflective Learner",
-    1: "Consistent Learner" 
-}
+# =========================================================
+# 1. KONFIGURASI PROFIL & TEMPLATE (ISI ASLI ANDA)
+# =========================================================
 
+# 5 Fitur asli dari model Anda (sesuai CSV)
 FEATURE_COLUMNS_TOTAL = [
-    'total_materi_selesai',
-    'avg_durasi_materi_detik',
-    'total_review',
-    'total_hari_aktif',
-    'std_dev_materi_harian',
-    'avg_skor_kuis',
-    'pass_rate_kuis',
-    'total_kuis_diambil',
-    'avg_rating_submission',
-    'total_submissions'
+    "total_active_days",
+    "avg_completion_time_hours",
+    "total_journeys_completed",
+    "rejection_ratio",
+    "avg_exam_score",
 ]
 
-data_storage: Dict[str, pd.DataFrame] = {}
+CLUSTER_PROFILES: Dict[int, Dict[str, Any]] = {
+    0: {
+        "label_id": "Fast Learner",
+        "short_description": (
+            "Aktivitas belajar masih jarang, tetapi ketika mulai belajar mampu menyelesaikan modul dengan sangat cepat "
+            "dan mempertahankan nilai ujian yang cukup baik. Volume journey relatif rendah dan hampir tidak ada revisi submission."
+        ),
+        "concept_tag": "fast_learner",
+    },
+    1: {
+        "label_id": "Consistent Learner",
+        "short_description": (
+            "Belajar secara konsisten, menyelesaikan banyak journey, dan memiliki nilai ujian yang tinggi. "
+            "Tingkat refleksi berada pada kisaran sedang."
+        ),
+        "concept_tag": "consistent_learner",
+    },
+    2: {
+        "label_id": "Reflective Learner",
+        "short_description": (
+            "Sangat sering aktif dan menyelesaikan banyak journey, namun membutuhkan waktu yang panjang per modul. "
+            "Cenderung mengulas materi secara mendalam."
+        ),
+        "concept_tag": "reflective_learner",
+    },
+    3: {
+        "label_id": "Struggling Learner",
+        "short_description": (
+            "Cukup aktif dan banyak bereksperimen dengan submission (revisi tinggi), "
+            "namun nilai ujian relatif rendah sehingga masih perlu penguatan konsep."
+        ),
+        "concept_tag": "struggling_learner",
+    },
+}
+
+# =========================================================
+# TEMPLATE KALIMAT INSIGHT UNTUK SETIAP CLUSTER
+# =========================================================
+
+CLUSTER_TEMPLATES: Dict[int, str] = {
+    0: (
+        "Aktivitas belajarmu masih jarang (sekitar {active_days:.0f} hari aktif), "
+        "tetapi ketika mulai belajar kamu bergerak sangat cepat dengan rata-rata waktu selesai "
+        "sekitar {avg_time_hours:.1f} jam per modul. Kamu telah menyelesaikan sekitar {journeys:.0f} journey "
+        "dengan nilai ujian rata-rata {score:.0f}. Cobalah meningkatkan frekuensi belajar agar dampak "
+        "pembelajaranmu lebih konsisten."
+    ),
+    1: (
+        "Kamu belajar secara cukup konsisten (sekitar {active_days:.0f} hari aktif) dan telah menyelesaikan "
+        "sekitar {journeys:.0f} journey. Nilai ujian rata-ratamu tinggi, yaitu sekitar {score:.0f}. "
+        "Tingkat refleksi melalui submission yang ditolak berada di kisaran {rejection_ratio:.2f}. "
+        "Pertahankan pola belajar ini dan gunakan umpan balik untuk terus menyempurnakan pemahamanmu."
+    ),
+    2: (
+        "Kamu sangat tekun dengan sekitar {active_days:.0f} hari aktif dan telah menyelesaikan "
+        "sekitar {journeys:.0f} journey. Rata-rata waktu yang kamu habiskan per modul cukup panjang, "
+        "sekitar {avg_time_hours:.1f} jam. Nilai ujian rata-ratamu sekitar {score:.0f}. "
+        "Pertahankan kedalaman belajarmu, namun pertimbangkan pengelolaan waktu belajar yang lebih efisien."
+    ),
+    3: (
+        "Kamu cukup aktif belajar (sekitar {active_days:.0f} hari aktif) dan telah menyelesaikan "
+        "sekitar {journeys:.0f} journey. Rata-rata nilai ujianmu saat ini sekitar {score:.0f}, "
+        "dengan rasio submission ditolak sekitar {rejection_ratio:.2f}. Ini menunjukkan kamu banyak "
+        "bereksperimen, tetapi masih perlu memperkuat pemahaman konsep dasar. Manfaatkan kembali materi, "
+        "contoh solusi, dan umpan balik dari submission untuk meningkatkan hasil ujian."
+    ),
+}
+
+# Variable Global untuk Artifacts
+data_storage: Dict[str, Any] = {}
+
+# =========================================================
+# 2. LIFESPAN (STRUKTUR YANG DIINGINKAN)
+# =========================================================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Startup: Memuat data fitur yang sudah diproses (data_clean_all_users.csv)...")
+    print("Startup: Memuat model dan data...")
     try:
-        features_df = pd.read_csv("data/data_clean_all_users.csv")
+        # Load Model & Scaler (Pakai pickle sesuai file asli Anda)
+        with open(BASE_DIR / "model" / "scaler.pkl", "rb") as f:
+            data_storage['scaler'] = pickle.load(f)
         
-        if 'user_id' not in features_df.columns or 'name' not in features_df.columns:
-            raise ValueError("CSV harus memiliki kolom 'user_id' dan 'name'.")
+        with open(BASE_DIR / "model" / "kmeans_model.pkl", "rb") as f:
+            data_storage['model'] = pickle.load(f)
+
+        # Load Data CSV
+        features_df = pd.read_csv(BASE_DIR / "data" / "clustered_students.csv")
+        
+        # Validasi Kolom (Sesuai CSV Anda)
+        if 'developer_id' not in features_df.columns:
+            raise ValueError("CSV harus memiliki kolom 'developer_id'.")
         
         missing_cols = [col for col in FEATURE_COLUMNS_TOTAL if col not in features_df.columns]
         if missing_cols:
-            raise ValueError(f"Kolom fitur berikut tidak ada di CSV: {missing_cols}")
+            raise ValueError(f"Kolom fitur berikut hilang: {missing_cols}")
                 
-        features_df = features_df.set_index('user_id')
+        # Indexing untuk pencarian cepat
+        features_df = features_df.drop_duplicates(subset=['developer_id'])
+        features_df = features_df.set_index('developer_id')
         
         data_storage['features'] = features_df
         
-        print(f"Startup: Data {len(features_df)} user (dengan 10 fitur) berhasil dimuat.")
+        print(f"Startup: Berhasil memuat data {len(features_df)} siswa dan model.")
 
-    except FileNotFoundError:
-        print("Error Startup: File 'data/data_clean_all_users.csv' tidak ditemukan.")
-        raise SystemExit("Gagal memuat data fitur.")
+    except FileNotFoundError as e:
+        print(f"Error Startup: File tidak ditemukan. {e}")
+        raise SystemExit("Gagal memuat file artifacts.")
     except Exception as e:
-        print(f"Error Startup: Gagal memproses data_clean_all_users.csv. {e}")
-        raise SystemExit(f"Gagal memproses data: {e}")
+        print(f"Error Startup: {e}")
+        raise SystemExit(f"Gagal inisialisasi: {e}")
 
     yield
     
-    print("Shutdown: Membersihkan data storage...")
+    print("Shutdown: Membersihkan memory...")
     data_storage.clear()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="AI Learning Insight API", version="1.0.0", lifespan=lifespan)
 
-class PredictionOut(BaseModel):
-    user_id: int
-    name: str
-    learning_style: str
-    cluster_id: int
-    status: str
+# =========================================================
+# 3. PYDANTIC MODELS (STRUKTUR YANG DIINGINKAN)
+# =========================================================
 
 class PredictIn(BaseModel):
-    student_id: int
+    developer_id: int # Disesuaikan agar cocok dengan data Anda
     features: Optional[Dict[str, Any]] = None
 
 class PredictOutData(BaseModel):
     label: str
     confidence: float
     reasons: List[Dict[str, Any]]
-    user_id: int
-    name: str
+    developer_id: int
+    developer_name: str
     cluster_id: int
+    insight_text: str # Tambahan agar insight Anda tetap muncul
     features: Dict[str, Any]
 
 class PredictOutStatus(BaseModel):
     status: str
-    data: PredictOutData
+    data: Optional[PredictOutData] = None
+    message: Optional[str] = None
 
-def _predict_core(user_id: int) -> Tuple[str, int, str, Dict[str, Any]]:
+class SimplePredictionOut(BaseModel):
+    developer_id: int
+    name: str
+    learning_style: str
+    cluster_id: int
+    status: str
+
+# =========================================================
+# 4. CORE LOGIC
+# =========================================================
+
+def _generate_insight_text(cluster_id: int, row: Dict[str, float]) -> str:
+    """Helper untuk membuat kalimat insight sesuai template asli"""
+    template = CLUSTER_TEMPLATES.get(cluster_id, "")
+    return template.format(
+        active_days=row.get("total_active_days", 0),
+        avg_time_hours=row.get("avg_completion_time_hours", 0),
+        journeys=row.get("total_journeys_completed", 0),
+        rejection_ratio=row.get("rejection_ratio", 0),
+        score=row.get("avg_exam_score", 0),
+    )
+
+def _predict_core(dev_id: int) -> Tuple[str, int, str, str, Dict[str, Any]]:
+    # 1. Cek Data di CSV
     try:
-        user_data_series = data_storage['features'].loc[user_id]
-        
+        user_data_series = data_storage['features'].loc[dev_id]
     except KeyError:
-        empty_features = {col: 0 for col in FEATURE_COLUMNS_TOTAL}
-        return ("Not Active", -1, f"User {user_id} (Not Found)", empty_features)
+        # Jika user tidak ada di CSV
+        empty = {col: 0 for col in FEATURE_COLUMNS_TOTAL}
+        return ("Not Active", -1, "Unknown User", "User tidak ditemukan.", empty)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error saat lookup user: {e}")
+        raise HTTPException(status_code=500, detail=f"Lookup error: {e}")
 
-    user_name = str(user_data_series['name'])
+    dev_name = str(user_data_series.get('developer_name', 'Unknown'))
     
-    fitur_user_df = user_data_series[FEATURE_COLUMNS_TOTAL].to_frame().T
-    
-    raw_features_dict = fitur_user_df.iloc[0].to_dict()
+    # Ambil 5 fitur penting
+    fitur_df = user_data_series[FEATURE_COLUMNS_TOTAL].to_frame().T
+    raw_features = fitur_df.iloc[0].to_dict()
 
-    if fitur_user_df['total_materi_selesai'].iloc[0] == 0:
-        return ("Not Active", -1, user_name, raw_features_dict)
+    # 2. Cek apakah aktif (Logic: journeys > 0)
+    if raw_features['total_journeys_completed'] == 0:
+        return ("Not Active", -1, dev_name, "User belum menyelesaikan journey.", raw_features)
 
+    # 3. Prediksi Model
     try:
-        fitur_scaled = scaler.transform(fitur_user_df.values)
-        cluster_id = int(model.predict(fitur_scaled)[0])
-        learning_style = CLUSTER_MAP.get(cluster_id, "Cluster Tidak Dikenal")
-    except Exception as e:
-        print(f"CRITICAL ERROR: Gagal scaling/predict. Apa model/scaler Anda dilatih pada 10 fitur?")
-        print(e)
-        raise HTTPException(status_code=500, detail=f"Error saat prediksi model: {e}")
+        scaler = data_storage['scaler']
+        model = data_storage['model']
         
-    return (learning_style, cluster_id, user_name, raw_features_dict)
+        fitur_scaled = scaler.transform(fitur_df.values)
+        cluster_id = int(model.predict(fitur_scaled)[0])
+        
+        profile = CLUSTER_PROFILES.get(cluster_id, {})
+        label = profile.get("label_id", f"Cluster {cluster_id}")
+        
+        # Generate Text Insight Asli
+        insight_text = _generate_insight_text(cluster_id, raw_features)
+        
+    except Exception as e:
+        print(f"Prediction Error: {e}")
+        raise HTTPException(status_code=500, detail="Gagal melakukan prediksi model.")
+        
+    return (label, cluster_id, dev_name, insight_text, raw_features)
+
+# =========================================================
+# 5. ENDPOINTS
+# =========================================================
 
 @app.get("/")
 def read_root():
-    return {"message": "Selamat datang di API AI Learning Insight (Versi 10 Fitur CSV)!"}
+    return {"message": "Selamat datang di API AI Learning Insight!"}
 
 @app.post("/predict", response_model=PredictOutStatus)
 async def predict_post(payload: PredictIn):
     (
-        learning_style,
+        label,
         cluster_id,
-        user_name,
-        raw_features_dict,
-    ) = _predict_core(payload.student_id)
+        dev_name,
+        insight_text,
+        raw_features,
+    ) = _predict_core(payload.developer_id)
 
-    if learning_style == "Not Active":
-        data = PredictOutData(
-            label="Not Active",
-            confidence=0.0,
-            reasons=[],
-            user_id=payload.student_id,
-            name=user_name,
-            cluster_id=-1,
-            features=raw_features_dict
-        )
-    else:
-        reasons: List[Dict[str, Any]] = [
-            {"key": "total_materi_selesai", "op": ">=", "value": 1},
-        ]
-        data = PredictOutData(
-            label=learning_style,
-            confidence=1.0, 
-            reasons=reasons,
-            user_id=payload.student_id,
-            name=user_name,
-            cluster_id=cluster_id,
-            features=raw_features_dict
-        )
-        
-    return PredictOutStatus(status="success", data=data)
-
-@app.post("/predict/", response_model=PredictOutStatus)
-async def predict_post_trailing(payload: PredictIn):
-    return await predict_post(payload)
-
-@app.get("/predict/{user_id}", response_model=PredictionOut)
-async def predict_style(user_id: int):
-    (
-        learning_style,
-        cluster_id,
-        user_name,
-        raw_features_dict,
-    ) = _predict_core(user_id)
-
-    if learning_style == "Not Active":
-        status_msg = "Siswa belum menyelesaikan materi apapun."
-        if "(Not Found)" in user_name:
-             status_msg = "User ID tidak ditemukan di data."
-             
-        return PredictionOut(
-            user_id=user_id, name=user_name,
-            learning_style="Not Active", cluster_id=-1,
-            status=status_msg
+    if label == "Not Active":
+        # Response untuk user tidak aktif / tidak ketemu
+        return PredictOutStatus(
+            status="error",
+            message=insight_text, 
+            data=None
         )
 
-    return PredictionOut(
-        user_id=user_id, name=user_name,
-        learning_style=learning_style, cluster_id=cluster_id,
-        status="Prediksi berhasil."
+    # Response Sukses
+    # 'reasons' diisi simple logic agar sesuai struktur referensi
+    reasons = [
+        {"key": "total_journeys_completed", "op": ">", "value": 0},
+        {"key": "cluster_id", "value": cluster_id}
+    ]
+    
+    data_obj = PredictOutData(
+        label=label,
+        confidence=1.0,
+        reasons=reasons,
+        developer_id=payload.developer_id,
+        developer_name=dev_name,
+        cluster_id=cluster_id,
+        insight_text=insight_text, # Menampilkan insight yang sudah digenerate
+        features=raw_features
+    )
+    
+    return PredictOutStatus(status="success", data=data_obj)
+
+@app.get("/predict/{developer_id}", response_model=SimplePredictionOut)
+async def predict_style_get(developer_id: int):
+    (label, cluster_id, dev_name, insight, _) = _predict_core(developer_id)
+
+    status_msg = "Prediksi berhasil."
+    if label == "Not Active":
+        status_msg = insight # Pesan error/info
+
+    return SimplePredictionOut(
+        developer_id=developer_id, 
+        name=dev_name,
+        learning_style=label, 
+        cluster_id=cluster_id,
+        status=status_msg
     )
 
 if __name__ == "__main__":
     import uvicorn
+    # Port 8001 sesuai permintaan
     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)

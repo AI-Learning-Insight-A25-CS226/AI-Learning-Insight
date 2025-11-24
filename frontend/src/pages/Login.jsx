@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
@@ -13,10 +13,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -29,20 +29,22 @@ const Login = () => {
     if (result.success) {
       navigate("/dashboard");
     } else {
-      setError(result.error);
+      setError(result.error || "Login gagal");
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center ">
-      <div className=" p-8  w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="p-8 w-full max-w-md">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-primary text-center">
             AI Learning Insight
           </h2>
-          <p className="text-secondary text-center mt-2">Masuk ke akun Anda</p>
+          <p className="text-secondary text-center mt-2">
+            Masuk ke akun Anda
+          </p>
         </div>
 
         {error && (
@@ -129,13 +131,10 @@ const Login = () => {
 
         <div className="mt-6">
           <p className="text-center text-sm text-gray-600">
-            Belum punya akun?{" "}
-            <Link
-              to="/register"
-              className="font-medium text-secondary hover:text-primary"
-            >
-              Daftar sekarang
-            </Link>
+            Akun login sudah disediakan oleh penyelenggara.{" "}
+            <span className="block">
+              Jika belum punya akses, silakan hubungi admin.
+            </span>
           </p>
         </div>
       </div>
