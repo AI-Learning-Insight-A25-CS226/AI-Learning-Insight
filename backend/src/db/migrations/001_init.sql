@@ -7,9 +7,7 @@ create table if not exists developers (
 );
 
 create table if not exists learning_metrics (
-  developer_id bigint primary key
-    references developers(id) on delete cascade,
-
+  developer_id bigint primary key references developers(id) on delete cascade,
   total_active_days integer default 0,
   avg_completion_time_hours double precision default 0,
   total_journeys_completed integer default 0,
@@ -17,9 +15,7 @@ create table if not exists learning_metrics (
   rejected_submissions integer default 0,
   avg_exam_score double precision default 0,
   rejection_ratio double precision default 0,
-
   cluster_label integer,
-
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
