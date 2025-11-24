@@ -28,7 +28,7 @@ create table if not exists insights (
   developer_id bigint primary key references developers(id) on delete cascade,
   learning_style text,
   confidence_score double precision default 0,
-  insight_text text
+  insight_text text,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -38,6 +38,6 @@ create table if not exists insight_histories (
   developer_id bigint not null references developers(id) on delete cascade,
   learning_style text,
   confidence_score double precision default 0,
-  insight_text text
+  insight_text text,
   created_at timestamp with time zone default now()
 );
