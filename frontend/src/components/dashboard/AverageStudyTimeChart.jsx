@@ -14,7 +14,8 @@ const AverageStudyTimeChart = ({ metrics }) => {
   const data = [
     { day: "Mon", hours: 2.5 },
     { day: "Tue", hours: 3.2 },
-    { day: "Wed", hours: metrics?.avg_completion_time_hours || 2.8 },
+    // { day: "Wed", hours: metrics?.avg_completion_time_hours || 2.8 },
+    { day: "Wed", hours: 2.8 },
     { day: "Thu", hours: 4.1 },
     { day: "Fri", hours: 3.5 },
     { day: "Sat", hours: 2.0 },
