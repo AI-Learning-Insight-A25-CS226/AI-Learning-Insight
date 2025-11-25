@@ -49,17 +49,20 @@ POST /auth/login
 GET /auth/me
 
 📊 Learning Metrics
+```
 GET /api/developers/{developerId}/metrics
 PUT /api/developers/{developerId}/metrics
 GET /api/developers/{developerId}/metrics/overview
 GET /api/developers/{developerId}/metrics/weekly
 GET /api/developers/{developerId}/metrics/history
-
+```
 🧠 Insights (ML)
+```
 POST /api/developers/{developerId}/insights
 GET /api/developers/{developerId}/insights
-
+```
 Isi openapi.yaml:
+```
 Struktur lengkap request & response
 Path parameter seperti developerId
 Semua kemungkinan status code
@@ -70,13 +73,14 @@ Contoh response:
    - historical performance
    - insight dari ML
 Dokumentasi OpenAPI untuk Swagger UI
-
+```
+```
 Kegunaan openapi.yaml
 Acuan FE dalam integrasi API
 Menjaga konsistensi API sepanjang pengembangan
 Dipakai Swagger UI di route /docs
 Mempermudah debugging & review API
-
+```
 2. AI Learning Insight API (with ML).postman_collection.json
 🔑 Login (JWT)
 👤 /auth/me
@@ -119,3 +123,4 @@ if (token) {
 - Wajib menjalankan node scripts/run-sql.js dan node scripts/seed.js sebelum start backend agar database terbuat dan memiliki isi.
 - Pastikan ML service berjalan sebelum testing endpoint insights.
 - Gunakan Session Pooler Supabase untuk koneksi.
+
