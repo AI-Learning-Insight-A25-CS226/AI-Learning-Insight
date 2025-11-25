@@ -98,10 +98,10 @@ Koleksi Utama
    - Get Latest Insight
 
 Fungsi utama koleksi:
-Test seluruh endpoint dengan mudah
-Debug komunikasi FE → BE → ML
-Menyimpan JWT otomatis
-Menjalankan percobaan prediksi ML tanpa FE
+- Test seluruh endpoint dengan mudah
+- Debug komunikasi FE → BE → ML
+- Menyimpan JWT otomatis
+- Menjalankan percobaan prediksi ML tanpa FE
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Koleksi Postman sudah berisi script otomatis untuk menyimpan token JWT
 *Scripts untuk postman bagian POST Login:*
@@ -126,6 +126,7 @@ if (token) {
 - Wajib menjalankan node scripts/run-sql.js dan node scripts/seed.js sebelum start backend agar database terbuat dan memiliki isi.
 - Pastikan ML service berjalan sebelum testing endpoint insights.
 - Gunakan Session Pooler Supabase untuk koneksi.
+
 
 
 
