@@ -42,7 +42,6 @@ npm run dev
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Dokumentasi API
 1. openapi.yaml
-
 Endpoint Utama
 🔐 Authentication
    - POST /auth/login
@@ -78,14 +77,18 @@ Kegunaan openapi.yaml
 - Mempermudah debugging & review API
 
 2. AI Learning Insight API (with ML).postman_collection.json
+   Koleksi Utama
 🔑 Login (JWT)
+
 👤 /auth/me
+
 📊 Metrics:
    - Get Metrics
    - Update Metrics (PUT)
    - Overview Metrics
    - Weekly Progress
    - Historical Performance
+   - 
 🧠 Insights:
    - Predict Insight (via ML)
    - Get Latest Insight
@@ -119,5 +122,3 @@ if (token) {
 - Wajib menjalankan node scripts/run-sql.js dan node scripts/seed.js sebelum start backend agar database terbuat dan memiliki isi.
 - Pastikan ML service berjalan sebelum testing endpoint insights.
 - Gunakan Session Pooler Supabase untuk koneksi.
-
-
