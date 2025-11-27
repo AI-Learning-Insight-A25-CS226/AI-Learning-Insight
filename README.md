@@ -44,6 +44,7 @@ npm run dev
 1. openapi.yaml
 
 Endpoint Utama
+
 🔐 Authentication
    - POST /auth/login
    - GET /auth/me
@@ -78,23 +79,29 @@ Kegunaan openapi.yaml
 - Mempermudah debugging & review API
 
 2. AI Learning Insight API (with ML).postman_collection.json
+
+Koleksi Utama
+   
 🔑 Login (JWT)
+
 👤 /auth/me
+
 📊 Metrics:
    - Get Metrics
    - Update Metrics (PUT)
    - Overview Metrics
    - Weekly Progress
    - Historical Performance
+   - 
 🧠 Insights:
    - Predict Insight (via ML)
    - Get Latest Insight
 
 Fungsi utama koleksi:
-Test seluruh endpoint dengan mudah
-Debug komunikasi FE → BE → ML
-Menyimpan JWT otomatis
-Menjalankan percobaan prediksi ML tanpa FE
+- Test seluruh endpoint dengan mudah
+- Debug komunikasi FE → BE → ML
+- Menyimpan JWT otomatis
+- Menjalankan percobaan prediksi ML tanpa FE
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Koleksi Postman sudah berisi script otomatis untuk menyimpan token JWT
 *Scripts untuk postman bagian POST Login:*
@@ -119,5 +126,7 @@ if (token) {
 - Wajib menjalankan node scripts/run-sql.js dan node scripts/seed.js sebelum start backend agar database terbuat dan memiliki isi.
 - Pastikan ML service berjalan sebelum testing endpoint insights.
 - Gunakan Session Pooler Supabase untuk koneksi.
+
+
 
 
