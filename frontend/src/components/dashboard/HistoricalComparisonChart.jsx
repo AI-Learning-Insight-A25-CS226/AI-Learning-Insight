@@ -9,37 +9,45 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const HistoricalComparisonChart = ({ metrics }) => {
-  const currentScore = metrics?.avg_exam_score || 75;
-  const data = [
-    { month: "Jan", score: 65 },
-    { month: "Feb", score: 70 },
-    { month: "Mar", score: 68 },
-    { month: "Apr", score: 75 },
-    { month: "May", score: 78 },
-    { month: "Jun", score: currentScore },
+const HistoricalComparisonChart = ({ data }) => {
+  // Fallback data jika API belum ada data
+  const defaultData = [
+    { month: "Jan", score: 0 },
+    { month: "Feb", score: 0 },
+    { month: "Mar", score: 0 },
+    { month: "Apr", score: 0 },
+    { month: "May", score: 0 },
+    { month: "Jun", score: 0 },
   ];
+
+  const chartData = data && data.length > 0 ? data : defaultData;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Historical Performance
       </h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Area
-            type="monotone"
-            dataKey="score"
-            stroke="#8b5cf6"
-            fill="#8b5cf6"
-            fillOpacity={0.3}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {chartData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Area
+              type="monotone"
+              dataKey="score"
+              stroke="#8b5cf6"
+              fill="#8b5cf6"
+              fillOpacity={0.3}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex items-center justify-center h-[300px] text-gray-500">
+          No historical performance data available
+        </div>
+      )}
     </div>
   );
 };

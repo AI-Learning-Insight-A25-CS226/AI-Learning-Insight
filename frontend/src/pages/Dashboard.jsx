@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getMetrics, getInsights, generateInsights } from "../services/auth";
+import {
+  getMetrics,
+  getInsights,
+  generateInsights,
+  getStudyTimeData,
+  getWeeklyProgressData,
+  getHistoricalData,
+} from "../services/auth";
 import MetricCard from "../components/dashboard/MetricCard";
 import AverageStudyTimeChart from "../components/dashboard/AverageStudyTimeChart";
 import WeeklyProgressChart from "../components/dashboard/WeeklyProgressChart";
@@ -19,6 +26,9 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState(null);
   const [insights, setInsights] = useState(null);
+  const [studyTimeData, setStudyTimeData] = useState([]);
+  const [weeklyProgressData, setWeeklyProgressData] = useState([]);
+  const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generatingInsights, setGeneratingInsights] = useState(false);
 
@@ -31,13 +41,20 @@ const Dashboard = () => {
 
     try {
       setLoading(true);
-      const [metricsData, insightsData] = await Promise.all([
-        getMetrics(user.id),
-        getInsights(user.id).catch(() => null),
-      ]);
+      const [metricsData, insightsData, studyTime, weeklyProgress, historical] =
+        await Promise.all([
+          getMetrics(user.id),
+          getInsights(user.id).catch(() => null),
+          getStudyTimeData(user.id).catch(() => []),
+          getWeeklyProgressData(user.id).catch(() => []),
+          getHistoricalData(user.id).catch(() => []),
+        ]);
 
       setMetrics(metricsData);
       setInsights(insightsData);
+      setStudyTimeData(studyTime);
+      setWeeklyProgressData(weeklyProgress);
+      setHistoricalData(historical);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -145,12 +162,12 @@ const Dashboard = () => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <AverageStudyTimeChart metrics={metrics} />
-        <WeeklyProgressChart metrics={metrics} />
+        <AverageStudyTimeChart data={studyTimeData} />
+        <WeeklyProgressChart data={weeklyProgressData} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HistoricalComparisonChart metrics={metrics} />
+        <HistoricalComparisonChart data={historicalData} />
         <MetricsBreakdown metrics={metrics} />
       </div>
     </div>

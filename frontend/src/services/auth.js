@@ -35,3 +35,19 @@ export const generateInsights = async (developerId) => {
   const response = await api.post(`/api/developers/${developerId}/insights`);
   return response.data.data.insight;
 };
+
+// Chart Data APIs
+export const getStudyTimeData = async (developerId) => {
+  const response = await api.get(`/api/developers/${developerId}/study-time`);
+  return response.data.data.studyTime;
+};
+
+export const getWeeklyProgressData = async (developerId) => {
+  const response = await api.get(`/api/developers/${developerId}/weekly-progress`);
+  return response.data.data.weeklyProgress;
+};
+
+export const getHistoricalData = async (developerId) => {
+  const response = await api.get(`/api/developers/${developerId}/historical-performance`);
+  return response.data.data.historical;
+};
