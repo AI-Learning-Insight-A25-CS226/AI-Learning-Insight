@@ -19,7 +19,7 @@ app.get('/health', (_req, res) =>
     ml: process.env.ML_SERVICE_URL || null
   })
 )
-app.get('/', (_req, res) => res.json({ message: '✅ Backend ready' }))
+app.get('/', (_req, res) => res.json({ message: 'Backend ready' }))
 // debugging endpoint untuk cek koneksi ML service
 // app.get('/api/debug/ml', async (_req, res) => {
 //   const mlUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001'
@@ -46,5 +46,5 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })

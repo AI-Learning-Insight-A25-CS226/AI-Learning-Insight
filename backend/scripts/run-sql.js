@@ -9,12 +9,12 @@ const MIGRATIONS_DIR = path.resolve('src/db/migrations')
 
 async function runSqlFile (client, filePath) {
   const sql = fs.readFileSync(filePath, 'utf8')
-  console.log(`\n🚀 Running migration: ${path.basename(filePath)}`)
+  console.log(`\n Running migration: ${path.basename(filePath)}`)
   try {
     await client.query(sql)
-    console.log(`✅ Success: ${path.basename(filePath)}`)
+    console.log(`Success: ${path.basename(filePath)}`)
   } catch (err) {
-    console.error(`❌ Error in ${path.basename(filePath)}:`, err.message)
+    console.error(`Error in ${path.basename(filePath)}:`, err.message)
   }
 }
 
@@ -32,7 +32,7 @@ async function main () {
     .sort()
 
   if (files.length === 0) {
-    console.log('⚠️  No SQL migration files found in:', MIGRATIONS_DIR)
+    console.log('No SQL migration files found in:', MIGRATIONS_DIR)
     await client.end()
     return
   }
@@ -43,7 +43,7 @@ async function main () {
   }
 
   await client.end()
-  console.log('\n🎉 All migrations executed successfully!')
+  console.log('\n All migrations executed successfully!')
 }
 
 main().catch(err => {
