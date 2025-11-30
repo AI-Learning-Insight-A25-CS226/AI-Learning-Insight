@@ -11,7 +11,6 @@ import {
 } from "recharts";
 
 const AverageStudyTimeChart = ({ data }) => {
-  // Fallback data jika API belum ada data
   const defaultData = [
     { day: "Mon", hours: 0 },
     { day: "Tue", hours: 0 },

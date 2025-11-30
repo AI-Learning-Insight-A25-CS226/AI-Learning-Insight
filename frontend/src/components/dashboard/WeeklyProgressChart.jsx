@@ -11,7 +11,6 @@ import {
 } from "recharts";
 
 const WeeklyProgressChart = ({ data }) => {
-  // Fallback data jika API belum ada data
   const defaultData = [
     { week: "Week 1", completed: 0, target: 5 },
     { week: "Week 2", completed: 0, target: 5 },

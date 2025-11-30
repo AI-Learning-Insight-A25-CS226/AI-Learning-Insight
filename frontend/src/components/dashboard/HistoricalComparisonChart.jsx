@@ -10,7 +10,6 @@ import {
 } from "recharts";
 
 const HistoricalComparisonChart = ({ data }) => {
-  // Fallback data jika API belum ada data
   const defaultData = [
     { month: "Jan", score: 0 },
     { month: "Feb", score: 0 },
