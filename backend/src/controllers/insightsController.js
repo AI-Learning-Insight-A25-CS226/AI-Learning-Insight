@@ -23,14 +23,18 @@ export async function createOrUpdateInsight (req, res, next) {
 export async function getInsight (req, res, next) {
   try {
     const rawId = getDeveloperIdFromParams(req)
-    const data = await insights.getLastInsight(rawId)
-
-    if (!data) {
+    const developerId = parseInt(rawId, 10)
+    if (Number.isNaN(developerId)) {
       return res
-        .status(404)
-        .json({ status: 'fail', message: 'insight not found' })
+        .status(400)
+        .json({ status: 'fail', message: 'developerId must be an integer' })
     }
 
+    let data = await insights.getLastInsight(developerId)
+    if (!data) {
+      data = await insights.predictAndSave({ developerId })
+    }
+    
     res.json({
       status: 'success',
       data: { insight: data }

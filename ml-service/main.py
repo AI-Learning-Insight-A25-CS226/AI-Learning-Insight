@@ -200,14 +200,14 @@ def _generate_insight_text(cluster_id: int, row: Dict[str, float]) -> str:
     )
 
 
-def _predict_core(dev_id: int) -> Tuple[str, int, str, str, Dict[str, Any]]:
+def _predict_core(dev_id: int) -> Tuple[str, int, str, str, float, Dict[str, Any]]:
     # 1. Cek Data di CSV
     try:
         user_data_series = data_storage["features"].loc[dev_id]
     except KeyError:
         # Jika user tidak ada di CSV
         empty = {col: 0 for col in FEATURE_COLUMNS_TOTAL}
-        return ("Not Active", -1, "Unknown User", "User tidak ditemukan.", empty)
+        return ("Not Active", -1, "Unknown User", "User tidak ditemukan.", 0.0, empty)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lookup error: {e}")
 
@@ -224,6 +224,7 @@ def _predict_core(dev_id: int) -> Tuple[str, int, str, str, Dict[str, Any]]:
             -1,
             dev_name,
             "User belum menyelesaikan journey.",
+            0.0,              # confidence 0 kalau belum aktif
             raw_features,
         )
 
@@ -234,18 +235,26 @@ def _predict_core(dev_id: int) -> Tuple[str, int, str, str, Dict[str, Any]]:
 
         fitur_scaled = scaler.transform(fitur_df.values)
         cluster_id = int(model.predict(fitur_scaled)[0])
+        distances = model.transform(fitur_scaled)[0]
+        dist_to_own = float(distances[cluster_id])
+        max_dist = float(distances.max())
+
+        if max_dist == 0:
+            confidence = 1.0
+        else:
+            confidence = max(0.0, 1.0 - dist_to_own / max_dist)
 
         profile = CLUSTER_PROFILES.get(cluster_id, {})
         label = profile.get("label_id", f"Cluster {cluster_id}")
 
-        # Generate Text Insight Asli
+        # Generate Text Insight
         insight_text = _generate_insight_text(cluster_id, raw_features)
 
     except Exception as e:
         print(f"Prediction Error: {e}")
         raise HTTPException(status_code=500, detail="Gagal melakukan prediksi model.")
 
-    return (label, cluster_id, dev_name, insight_text, raw_features)
+    return (label, cluster_id, dev_name, insight_text, confidence, raw_features)
 
 
 # =========================================================
@@ -265,6 +274,7 @@ async def predict_post(payload: PredictIn):
         cluster_id,
         dev_name,
         insight_text,
+        confidence,
         raw_features,
     ) = _predict_core(payload.developer_id)
 
@@ -281,7 +291,7 @@ async def predict_post(payload: PredictIn):
 
     data_obj = PredictOutData(
         label=label,
-        confidence=1.0,
+        confidence=confidence,
         reasons=reasons,
         developer_id=payload.developer_id,
         developer_name=dev_name,
@@ -295,11 +305,11 @@ async def predict_post(payload: PredictIn):
 
 @app.get("/predict/{developer_id}", response_model=SimplePredictionOut)
 async def predict_style_get(developer_id: int):
-    (label, cluster_id, dev_name, insight, _) = _predict_core(developer_id)
+    (label, cluster_id, dev_name, insight, _confidence, _features) = _predict_core(developer_id)
 
     status_msg = "Prediksi berhasil."
     if label == "Not Active":
-        status_msg = insight  # Pesan error/info
+        status_msg = insight
 
     return SimplePredictionOut(
         developer_id=developer_id,
@@ -308,7 +318,6 @@ async def predict_style_get(developer_id: int):
         cluster_id=cluster_id,
         status=status_msg,
     )
-
 
 if __name__ == "__main__":
     import uvicorn

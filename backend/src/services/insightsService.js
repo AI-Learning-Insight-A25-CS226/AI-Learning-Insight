@@ -92,15 +92,28 @@ export async function predictAndSave ({ developerId }) {
   const client = await pool.connect()
   try {
     await client.query('begin')
-    await client.query(
-      `
-      insert into developers (id, name)
-      values ($1, $2)
-      on conflict (id) do update set
-        name = excluded.name
-      `,
-      [effectiveDeveloperId, mlNorm.name]
+
+    const devCheck = await client.query(
+      'select id, name from developers where id = $1',
+      [effectiveDeveloperId]
     )
+
+    if (devCheck.rowCount === 0) {
+      const err = new Error('Developer not found in developers table')
+      err.status = 404
+      throw err
+    }
+
+    if (mlNorm.name) {
+      await client.query(
+        `
+        update developers
+        set name = $2
+        where id = $1
+        `,
+        [effectiveDeveloperId, mlNorm.name]
+      )
+    }
 
     await client.query(
       `

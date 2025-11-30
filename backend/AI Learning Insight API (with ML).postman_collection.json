@@ -53,7 +53,7 @@
 			"name": "{developerId}",
 			"item": [
 			  {
-				"name": "Get Metrics",
+				"name": "Get Metrics (Snapshot)",
 				"request": {
 				  "method": "GET",
 				  "auth": {
@@ -120,7 +120,7 @@
 				}
 			  },
 			  {
-				"name": "Get Weekly Progress",
+				"name": "Get Weekly Progress (Chart)",
 				"request": {
 				  "method": "GET",
 				  "auth": {
@@ -140,7 +140,7 @@
 				}
 			  },
 			  {
-				"name": "Get Historical Performance",
+				"name": "Get Historical Performance (Chart)",
 				"request": {
 				  "method": "GET",
 				  "auth": {
@@ -208,5 +208,4 @@
 	  { "key": "baseUrl", "value": "http://localhost:5000" },
 	  { "key": "bearerToken", "value": "" }
 	]
-  }
-  
+  }  
